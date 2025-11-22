@@ -79,12 +79,52 @@ async def random_image(self, event: BaseMessageEvent):
   random_id = random.randint(1, 5)
   await self.api.send_group_image(event.group_id,f'plugins/scpc/assets/image{random_id}.png')
 ```
-
-再次运行, 又报错???
-``` bash
-导入模块 scpc 时出错: require_sender_admin() takes 0 positional arguments but 1 was given
-```
-试了半天, 最后给我自定义的装饰器加了个 `()` 就好了, 踩坑 狠狠的踩坑
  
+写几个简单的装饰器
+
+**日志装饰器**
+``` python
+from functools import wraps
+from typing import Callable
+
+def logit(func: Callable):
+    @wraps(func)
+    def with_logging(*args, **kwargs):
+        print(func.__name__ + " was called")
+        return func(*args, **kwargs)
+    return with_logging
+
+@logit
+def addition_func(x):
+    return x + x
+
+print(addition_func(4))
+
+```
+> 在调用函数 `addition_func(4)` 之前就会输出 `func.__name__ + " was called"`
+
+**带参数的装饰器**
+``` python
+from functools import wraps
+# 默认参数为 out.log 这个函数可以传递参数, 作为装饰器的名称标注
+def logit(file='out.log'):
+    # 装饰器, 在logit函数中仅充当装饰器对象作用, 可以理解为装饰器实际的执行函数
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            log_string = func.__name__ + " was called"
+            with open(file, 'a') as opened_file:
+                opened_file.write(log_string + '\n')
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+ 
+@logit(file='log.log')
+def func():
+    pass
+    
+func()
+```
+
 ## 总结
-总之, 这次开发经理十分有趣, 问了很多大佬, 学了很多知识, 感谢善良的人们
+总之, 这次开发经历十分有趣, 问了很多大佬, 学了很多知识, 感谢善良的人们
